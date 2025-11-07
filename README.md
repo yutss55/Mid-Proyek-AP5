@@ -41,7 +41,7 @@ Tujuannya supaya bisa mengontrol tiap tahap pembuatan, dan tahu kalau ada error 
 
 1. Buat Database
 - Buka database.py
-- Un-comment bagian line 18-19
+- Un-comment bagian line 22-23
 - Jalankan di terminal:
 ```python utils/database.py```
 - Setelah muncul pesan "Database berhasil dibuat", kembalikan komentar (#) agar tidak terbuat ulang setiap kali dijalankan.
@@ -49,21 +49,21 @@ Tujuannya supaya bisa mengontrol tiap tahap pembuatan, dan tahu kalau ada error 
 ```database=os.getenv("DB_NAME"),```
 
 2. Buat Tabel Users
-- Un-comment bagian line 23-29
+- Un-comment bagian line 27-33
 - Jalankan kembali:
 ```python utils/database.py```
 - Cek di phpMyAdmin untuk memastikan tabel users sudah ada.
 - Jika sudah ada, kembalikan komentar (#) agar tidak terbuat ulang setiap kali dijalankan.
 
 3. Buat Tabel Characters
-- Un-comment bagian line 32-50
+- Un-comment bagian line 36-54
 - Jalankan kembali:
 ```python utils/database.py```
 - Cek di phpMyAdmin untuk memastikan tabel users sudah ada.
 - Jika sudah ada, kembalikan komentar (#) agar tidak terbuat ulang setiap kali dijalankan.
 
 3. Buat Tabel Inventory
-- Un-comment bagian line 53-61
+- Un-comment bagian line 57-65
 - Jalankan kembali:
 ```python utils/database.py```
 - Cek di phpMyAdmin untuk memastikan tabel users sudah ada.
