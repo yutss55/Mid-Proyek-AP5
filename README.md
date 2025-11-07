@@ -57,6 +57,14 @@ Tujuannya supaya bisa mengontrol tiap tahap pembuatan, dan tahu kalau ada error 
 
 3. Buat Tabel Characters
 - Un-comment bagian line 36-53
+- Un-comment bagian line 36-54
+- Jalankan kembali:
+```python utils/database.py```
+- Cek di phpMyAdmin untuk memastikan tabel users sudah ada.
+- Jika sudah ada, kembalikan komentar (#) agar tidak terbuat ulang setiap kali dijalankan.
+
+3. Buat Tabel Inventory
+- Un-comment bagian line 57-65
 - Jalankan kembali:
 ```python utils/database.py```
 - Cek di phpMyAdmin untuk memastikan tabel users sudah ada.

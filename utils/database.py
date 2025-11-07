@@ -9,7 +9,7 @@ db = mysql.connector.connect(
     host=os.getenv("DB_HOST"),
     user=os.getenv("DB_USER"),
     password=os.getenv("DB_PASSWORD"),
-    database=os.getenv(""),
+    database=os.getenv("DB_NAME"),
     port=int(os.getenv("DB_PORT"))
 )
 cursor = db.cursor()
@@ -26,9 +26,9 @@ cursor = db.cursor()
 # 1. Tabel user
 # cursor.execute('''
 #     CREATE TABLE IF NOT EXISTS users (
-#         id INTEGER PRIMARY KEY AUTOINCREMENT,
-#         username TEXT NOT NULL UNIQUE,
-#         password_hash TEXT NOT NULL
+#         id INT AUTO_INCREMENT PRIMARY KEY,
+#         username VARCHAR(100) NOT NULL UNIQUE,
+#         password_hash VARCHAR(255) NOT NULL
 #     )
 # ''')
 
