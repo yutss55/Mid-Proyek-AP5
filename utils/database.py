@@ -15,8 +15,8 @@ db = mysql.connector.connect(
 cursor = db.cursor()
 
 # Mengecek koneksi database ke Python
-# if db.is_connected():
-#     print("berhasil.")
+#if db.is_connected():
+#   print("berhasil.")
 
 # Buat database
 # cursor.execute("CREATE DATABASE game_adventure")
