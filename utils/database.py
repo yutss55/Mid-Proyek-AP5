@@ -32,34 +32,22 @@ cursor = db.cursor()
 #     )
 # ''')
 
-# # 2. Tabel karakter dalam game
+# 2. Tabel karakter dalam game
 # cursor.execute('''
 #     CREATE TABLE IF NOT EXISTS characters (
-#         id INT AUTO_INCREMENT PRIMARY KEY,
-#         user_id INT NOT NULL UNIQUE,
-#         role VARCHAR(50) NOT NULL,
-#         hp INT NOT NULL,
-#         max_hp INT NOT NULL,
-#         energi INT NOT NULL,
-#         max_energi INT NOT NULL,
-#         deff INT NOT NULL,
-#         damage INT NOT NULL,
-#         gold INT DEFAULT 10,
-#         exp INT DEFAULT 0,
-#         score INT DEFAULT 0,
-#         title VARCHAR(100) DEFAULT 'Newbie',
-#         current_floor INT DEFAULT 1,
-#         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-#     ) ENGINE=InnoDB;
-# ''')
-
-# # 3. Tabel item untuk karakter
-# cursor.execute('''
-#     CREATE TABLE IF NOT EXISTS inventory (
-#         id INT AUTO_INCREMENT PRIMARY KEY,
-#         character_id INT NOT NULL,
-#         item_name VARCHAR(100) NOT NULL,
-#         quantity INT NOT NULL,
-#         FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE
-#     ) ENGINE=InnoDB;
+#     id INT AUTO_INCREMENT PRIMARY KEY,
+#     user_id INT NOT NULL,
+#     class_name VARCHAR(30) NOT NULL,
+#     hp INT DEFAULT 0,
+#     energy INT DEFAULT 0,
+#     defense INT DEFAULT 0,
+#     damage INT DEFAULT 0,
+#     gold INT DEFAULT 0,
+#     exp INT DEFAULT 0,
+#     floor INT DEFAULT 1,
+#     title VARCHAR(50) DEFAULT 'Novice',
+#     score INT DEFAULT 0,
+#     inventory TEXT DEFAULT '{}',
+#     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+# )
 # ''')
