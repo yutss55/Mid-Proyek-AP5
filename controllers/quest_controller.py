@@ -1,6 +1,7 @@
 # Controller for quest
 import random
 from models.quest_model import QuestData
+from controllers.leaderboard_controller import update_player_score
 
 class QuestController:
     def __init__(self, character):
@@ -9,9 +10,9 @@ class QuestController:
 
     def bikin_quest(self):
          # Jika sudah menyelesaikan 3 quest biasa, munculkan quest boss
-        if self.karakter.quest_selesai >= 3:
+        if self.character.quest_selesai >= 3:
             self.buat_quest_boss()
-            self.karakter.quest_selesai = 0  # reset counter setelah boss
+            self.character.quest_selesai = 0  # reset counter setelah boss
             return
 
         tipe_quest = random.choice(["berburu", "pengumpulan"])
@@ -60,7 +61,7 @@ class QuestController:
         hadiah_exp = random.randint(150, 250)
         quest_boss = QuestData("boss", f"Kalahkan {bos}", hadiah_uang, hadiah_exp, "epik")
         self.quest_aktif = quest_boss
-        self.karakter.bisa_lawan_boss = True
+        self.character.bisa_lawan_boss = True
         quest_boss.tampilkan_info_quest()
 
     def selesaikan_quest(self):
@@ -72,25 +73,47 @@ class QuestController:
         hasil = random.choices(["berhasil", "gagal"], weights=[0.8, 0.2])[0]
 
         if hasil == "berhasil":
-            self.karakter.uang += self.quest_aktif.hadiah_uang
-            self.karakter.pengalaman += self.quest_aktif.hadiah_exp
+            self.character.gold += self.quest_aktif.hadiah_uang
+            self.character.exp += self.quest_aktif.hadiah_exp
             print(f"✅ Quest berhasil! Kamu mendapat {self.quest_aktif.hadiah_uang} gold dan {self.quest_aktif.hadiah_exp} exp.")
 
+            update_score_after_quest(self.character, self.quest_aktif.kesulitan)
+            
             if self.quest_aktif.tipe == "boss":
                 self.level_up_setelah_boss()
             else:
-                self.karakter.quest_selesai += 1
-                print(f"📜 Quest selesai: {self.karakter.quest_selesai}/3 sebelum boss muncul.")
+                self.character.quest_selesai += 1
+                print(f"📜 Quest selesai: {self.character.quest_selesai}/3 sebelum boss muncul.")
 
         else:
             print("❌ Quest gagal! Tidak mendapat hadiah.")
 
         self.quest_aktif = None
-        print(f"💰 Gold: {self.karakter.uang} | ⭐ EXP: {self.karakter.pengalaman}\n")
+        print(f"💰 Gold: {self.character.gold} | ⭐ EXP: {self.character.exp}\n")
 
     def level_up_setelah_boss(self):
         print("👑 Kamu mengalahkan BOS! Pengalaman dan hadiah besar diterima.")
-        self.karakter.level += 1
-        self.karakter.gelar = random.choice(["Pahlawan", "Sang Penakluk", "Kesatria Agung", "Pembasmi Kegelapan"])
-        self.karakter.bisa_lawan_boss = False
-        print(f"🎉 LEVEL UP! Sekarang Level {self.karakter.level} - Gelar: {self.karakter.gelar}\n")
+        self.character.floor += 1
+        self.character.title = random.choice(["Pahlawan", "Sang Penakluk", "Kesatria Agung", "Pembasmi Kegelapan"])
+        self.character.bisa_lawan_boss = False
+        print(f"🎉 LEVEL UP! Sekarang Level {self.character.floor} - Gelar: {self.character.title}\n")
+
+def update_score_after_quest(character, kesulitan_quest):
+    """
+    Fungsi untuk update score setelah quest selesai
+    """
+    score_map = {
+        "mudah": 15,
+        "sedang": 40,
+        "sulit": 80,
+        "epik": 300
+    }
+    
+    score_gained = score_map.get(kesulitan_quest, 10)
+    
+    if hasattr(character, 'character_id'):
+        update_player_score(character.character_id, score_gained)
+        if hasattr(character, 'score'):
+            character.score += score_gained
+    else:
+        print("⚠️ Character ID tidak ditemukan")
