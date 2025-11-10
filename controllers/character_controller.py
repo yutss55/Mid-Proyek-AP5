@@ -239,3 +239,20 @@ def inventory_menu(character_id: int):
             break
         else:
             print("Pilihan tidak valid.")
+
+def delete_character(user_id: int):
+    print("\n=== HAPUS KARAKTER ===")
+    confirm = input("Yakin ingin menghapus karakter Anda? (y/n): ").strip().lower()
+    if confirm != 'y':
+        print("Penghapusan dibatalkan.")
+        return
+    try:
+        cursor.execute("DELETE FROM characters WHERE user_id = %s", (user_id,))
+        db.commit()
+        if cursor.rowcount > 0:
+            print("Karakter berhasil dihapus.")
+        else:
+            print("Tidak ditemukan karakter untuk User ID tersebut.")
+    except Exception as e:
+        db.rollback()
+        print(f"Gagal menghapus karakter. Error: {e}")
