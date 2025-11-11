@@ -17,7 +17,7 @@ class QuestController:
             self.character.quest_selesai = 0  # reset setelah boss
             return
 
-        tipe_quest = random.choice(["berburu", "pengumpulan"])
+        tipe_quest = input("Pilih tipe quest (berburu/pengumpulan): ").strip().lower()
         kesulitan = random.choice(["mudah", "sedang", "sulit"])
         pengali = {"mudah": 1, "sedang": 1.5, "sulit": 2}[kesulitan]
 
