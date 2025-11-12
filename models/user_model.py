@@ -1,6 +1,7 @@
 # Model for user
 from utils.database import db, cursor
 import hashlib
+import mysql.connector
 
 class UserModel:
     def __init__(self, username, password):
@@ -19,3 +20,11 @@ class UserModel:
         query = "SELECT * FROM users WHERE username = %s"
         cursor.execute(query, (username,))
         return cursor.fetchone()
+    
+    @staticmethod
+    def delete_by_username(username):
+        """Menghapus akun dari tabel users berdasarkan username."""
+        from utils.database import db, cursor  # pastikan pakai koneksi global
+        query = "DELETE FROM users WHERE username = %s"
+        cursor.execute(query, (username))
+        db.commit()

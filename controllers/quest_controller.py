@@ -1,162 +1,271 @@
-# Controller untuk Quest
-import random
-from models.quest_model import QuestData
+from utils.database import cursor, db
 from controllers.leaderboard_controller import update_player_score
-from utils.database import db, cursor
+import random
 
-class QuestController:
-    def __init__(self, character):
-        self.character = character
-        self.active_quest = None
+# ==================================================
+# DAFTAR MONSTER DAN BOSS
+# ==================================================
+MONSTERS = {
+    "1": {"name": "Slime", "hp": 50, "attack": 8, "reward": {"gold": 20, "exp": 30, "score": 10}},
+    "2": {"name": "Goblin", "hp": 80, "attack": 15, "reward": {"gold": 35, "exp": 50, "score": 20}},
+    "3": {"name": "Werewolf", "hp": 120, "attack": 25, "reward": {"gold": 60, "exp": 90, "score": 30}},
+    "4": {"name": "Orc", "hp": 150, "attack": 30, "reward": {"gold": 80, "exp": 120, "score": 40}},
+}
 
-<<<<<<< HEAD
-    def bikin_quest(self):
-        # Jika sudah menyelesaikan 3 quest biasa, munculkan quest boss
-        if self.karakter.quest_selesai >= 3:
-=======
-    # Membuat quest baru
-    def buat_quest(self):
-        # Jika sudah menyelesaikan 3 quest biasa, munculkan quest boss
-        if self.character.quest_selesai >= 3:
->>>>>>> b95b6065a90f33c6870a93f7d7f5f052c2297180
-            self.buat_quest_boss()
-            self.character.quest_selesai = 0  # reset setelah boss
-            return
+BOSSES = {
+    "1": {"name": "Minotaur", "hp": 250, "attack": 45, "reward": {"gold": 200, "exp": 250, "score": 100}, "title": "Minotaur Conqueror"},
+    "2": {"name": "Dark Knight", "hp": 350, "attack": 60, "reward": {"gold": 300, "exp": 400, "score": 150}, "title": "Dark Knight Slayer"},
+    "3": {"name": "Hydra", "hp": 500, "attack": 75, "reward": {"gold": 450, "exp": 600, "score": 200}, "title": "Hydra Vanquisher"},
+    "4": {"name": "Dragon King", "hp": 700, "attack": 90, "reward": {"gold": 700, "exp": 900, "score": 300}, "title": "Dragon Slayer"},
+}
 
-        tipe_quest = input("Pilih tipe quest (berburu/pengumpulan): ").strip().lower()
-        kesulitan = random.choice(["mudah", "sedang", "sulit"])
-        pengali = {"mudah": 1, "sedang": 1.5, "sulit": 2}[kesulitan]
 
-        if tipe_quest == "berburu":
-            musuh = random.choice(["goblin", "serigala", "bandit", "orc", "naga kecil"])
-            reward_gold = int(random.randint(5, 15) * pengali)
-            reward_exp = int(random.randint(10, 25) * pengali)
-            quest = QuestData("berburu", f"Lawan {musuh}", reward_gold, reward_exp, kesulitan)
-        else:
-            material = random.choice(["kayu", "batu sihir", "herbal", "kulit binatang", "biji besi"])
-            reward_gold = int(random.randint(3, 10) * pengali)
-            reward_exp = int(random.randint(8, 20) * pengali)
-            quest = QuestData("pengumpulan", f"Kumpulkan {material}", reward_gold, reward_exp, kesulitan)
+# ==================================================
+# HELPER: AMBIL INVENTORY USER DARI DATABASE
+# ==================================================
+def get_inventory(character_id):
+    cursor.execute("""
+        SELECT si.item_name, si.item_type, i.quantity
+        FROM inventory i
+        JOIN shop_items si ON si.id = i.item_id
+        WHERE i.character_id = %s
+    """, (character_id,))
+    return cursor.fetchall()
 
-        self.active_quest = quest
-        print("\n🧭 Quest Baru Diterima!")
-        quest.tampilkan_info_quest()
 
-    # Membuat quest boss
-    def buat_quest_boss(self):
-        boss = random.choice(["Naga Api", "Raja Orc", "Iblis Kegelapan", "Hydra"])
-        print("\n🔥 QUEST BOSS TERBUKA! 🔥")
-        reward_gold = random.randint(50, 100)
-        reward_exp = random.randint(150, 250)
-        quest_boss = QuestData("boss", f"Kalahkan {boss}", reward_gold, reward_exp, "epik")
-        self.active_quest = quest_boss
-        self.character.bisa_lawan_boss = True
-        quest_boss.tampilkan_info_quest()
+# ==================================================
+# AKSI PERTEMPURAN (TURN-BASED)
+# ==================================================
+def quest_action_menu(character, enemy, is_boss=False):
+    print(f"\n⚔️ Kamu menghadapi {'Boss ' if is_boss else ''}{enemy['name']}!")
+    current_enemy_hp = enemy["hp"]
 
-    # Menyelesaikan quest
-    def selesaikan_quest(self):
-        if not self.active_quest:
-            print("❌ Tidak ada quest aktif!\n")
-            return
+    sword_active = False
+    armor_active = False
 
-        print(f"Menjalankan quest: {self.active_quest.nama}...")
-        hasil = random.choices(["berhasil", "gagal"], weights=[0.8, 0.2])[0]
+    while current_enemy_hp > 0 and character.hp > 0:
+        print(f"\n=== STATUS ===")
+        print(f"❤️ HP Kamu   : {character.hp}")
+        print(f"💀 HP Musuh  : {current_enemy_hp}")
 
-        if hasil == "berhasil":
-            # Tambahkan gold & exp
-            self.character.gold += self.active_quest.reward_gold
-            self.character.exp += self.active_quest.reward_exp
-            print(f"✅ Quest berhasil! Kamu mendapat {self.active_quest.reward_gold} gold dan {self.active_quest.reward_exp} exp.")
+        print("\n=== AKSI ===")
+        print("1. Menyerang")
+        print("2. Gunakan Potion")
+        print("3. Gunakan Armor (kurangi damage musuh)")
+        print("4. Gunakan Sword (tambah damage serangan)")
+        print("5. Menghindar (50% peluang berhasil)")
 
-            # Update skor setelah quest selesai
-            update_score_after_quest(self.character, self.active_quest.kesulitan)
+        action = input("Pilih aksi: ").strip()
+        inventory = get_inventory(character.character_id)
 
-            # Cek apakah quest boss atau biasa
-            if self.active_quest.tipe == "boss":
-                self.level_up_setelah_boss()
+        # =====================================
+        # 1. MENYERANG
+        # =====================================
+        if action == "1":
+            base_damage = character.damage + random.randint(-5, 10)
+            total_damage = base_damage
+            if sword_active:
+                total_damage += 15  # efek Iron Sword aktif
+                print("🗡️ Efek Sword aktif! Damage +15")
+
+            current_enemy_hp -= total_damage
+            print(f"\n🗡️ Kamu menyerang dan memberikan {total_damage} damage!")
+
+            if current_enemy_hp <= 0:
+                print(f"{enemy['name']} dikalahkan! 🎉")
+                gain_rewards(character, enemy, is_boss)
+                if is_boss:
+                    level_up_floor(character, enemy["reward"], enemy["title"])
+                break
+
+        # =====================================
+        # 2. GUNAKAN POTION
+        # =====================================
+        elif action == "2":
+            potions = [item for item in inventory if item["item_type"] == "potion" and item["quantity"] > 0]
+            if not potions:
+                print("❌ Kamu tidak memiliki potion apa pun.")
+                continue
+
+            print("\n=== PILIH POTION ===")
+            for idx, p in enumerate(potions, start=1):
+                print(f"[{idx}] {p['item_name']} (x{p['quantity']})")
+
+            try:
+                potion_choice = int(input("Pilih potion: "))
+                selected = potions[potion_choice - 1]
+            except (ValueError, IndexError):
+                print("Pilihan tidak valid.")
+                continue
+
+            heal = 50 if selected["item_name"] == "Health Potion" else 150
+            character.hp += heal
+            print(f"🧪 Kamu menggunakan {selected['item_name']} dan memulihkan {heal} HP!")
+
+            cursor.execute("""
+                UPDATE inventory 
+                SET quantity = quantity - 1 
+                WHERE character_id = %s 
+                AND item_id = (SELECT id FROM shop_items WHERE item_name = %s)
+            """, (character.character_id, selected["item_name"]))
+            db.commit()
+
+        # =====================================
+        # 3. GUNAKAN ARMOR
+        # =====================================
+        elif action == "3":
+            armor_items = [item for item in inventory if item["item_type"] == "armor" and item["quantity"] > 0]
+            if not armor_items:
+                print("❌ Kamu tidak memiliki armor apa pun.")
+                continue
+
+            for armor in armor_items:
+                if armor["item_name"] == "Steel Armor":
+                    armor_active = True
+                    print("🛡️ Kamu mengenakan Steel Armor! Damage musuh berkurang 40.")
+                    break
             else:
-                self.character.quest_selesai += 1
-                print(f"📜 Quest selesai: {self.character.quest_selesai}/3 sebelum boss muncul.")
-                print(f"🏆 Total Skor: {self.character.score}")
+                print("⚠️ Kamu tidak memiliki armor yang bisa digunakan.")
 
-            # Simpan hasil perubahan karakter ke database
-            self.update_character_database()
+        # =====================================
+        # 4. GUNAKAN SWORD (aktifkan efek, tapi monster tetap menyerang)
+        # =====================================
+        elif action == "4":
+            sword_items = [item for item in inventory if item["item_type"] == "weapon" and item["quantity"] > 0]
+            if not sword_items:
+                print("❌ Kamu tidak memiliki sword apa pun.")
+            else:
+                for sword in sword_items:
+                    if sword["item_name"] == "Iron Sword":
+                        sword_active = True
+                        print("⚔️ Kamu mengaktifkan Iron Sword! Damage serangan meningkat 15.")
+                        break
+                else:
+                    print("⚠️ Kamu tidak memiliki sword yang cocok.")
 
-            # Update skor ke leaderboard
-            update_player_score(self.character.user_id, self.character.score)
+        # =====================================
+        # 5. MENGHINDAR
+        # =====================================
+        elif action == "5":
+            if random.random() < 0.5:
+                print("💨 Kamu berhasil menghindari serangan musuh!")
+                continue
+            else:
+                print("⚠️ Kamu gagal menghindar!")
 
         else:
-            print("❌ Quest gagal! Tidak mendapat hadiah.")
+            print("❌ Aksi tidak valid! Pilih 1-5.")
+            continue
 
-        self.active_quest = None
-        print(f"💰 Gold: {self.character.gold} | ⭐ EXP: {self.character.exp} | 🏆 Skor: {self.character.score}\n")
+        # =====================================
+        # SERANGAN BALIK MUSUH
+        # =====================================
+        if current_enemy_hp > 0:
+            enemy_damage = enemy["attack"] + random.randint(-3, 5)
+            if armor_active:
+                enemy_damage = max(0, enemy_damage - 40)
+                print("🛡️ Armor aktif! Damage musuh berkurang 40.")
+            character.hp -= enemy_damage
+            print(f"💥 {enemy['name']} menyerang dan memberikan {enemy_damage} damage!")
 
-    # Naik level setelah boss dikalahkan
-    def level_up_setelah_boss(self):
-        print("👑 Kamu mengalahkan BOS! Pengalaman dan hadiah besar diterima.")
-        self.character.floor += 1
-        self.character.title = random.choice(["Pahlawan", "Sang Penakluk", "Kesatria Agung", "Pembasmi Kegelapan"])
-        self.character.bisa_lawan_boss = False
-        print(f"🎉 LEVEL UP! Sekarang Floor {self.character.floor} - Gelar: {self.character.title}")
-        print(f"🏆 Bonus Skor +100 (Total: {self.character.score})\n")
+            if character.hp <= 0:
+                print("\n💀 Kamu kalah dalam pertarungan! HP-mu tersisa 1.")
+                character.hp = 1
+                break
 
-        # Update database setelah boss dikalahkan
-        self.update_character_database()
-
-    # Simpan hasil perubahan karakter ke database
-    def update_character_database(self):
-        try:
-            sql = """
-                UPDATE characters
-                SET gold = %s,
-                    exp = %s,
-                    score = %s,
-                    floor = %s,
-                    title = %s
-                WHERE user_id = %s
-            """
-            values = (
-                self.character.gold,
-                self.character.exp,
-                self.character.score,
-                self.character.floor,
-                self.character.title,
-                self.character.user_id
-            )
-            cursor.execute(sql, values)
-            db.commit()
-            print("💾 Data karakter berhasil diperbarui ke database.\n")
-        except Exception as e:
-            db.rollback()
-            print(f"⚠️ Gagal memperbarui database: {e}\n")
+    cursor.execute("UPDATE characters SET hp = %s WHERE id = %s", (character.hp, character.character_id))
+    db.commit()
 
 
-# Fungsi tambahan untuk perhitungan skor otomatis
-def update_score_after_quest(character, kesulitan_quest):
-# Fungsi untuk memperbarui skor setelah menyelesaikan quest berdasarkan tingkat kesulitan
-    score_map = {
-        "mudah": 15,
-        "sedang": 40,
-        "sulit": 80,
-        "epik": 300
-    }
+# ==================================================
+# HADIAH SETELAH MENANG
+# ==================================================
+def gain_rewards(character, enemy, is_boss=False):
+    reward = enemy["reward"]
+    character.gold += reward["gold"]
+    character.exp += reward["exp"]
+    character.score += reward["score"]
 
-    score_gained = score_map.get(kesulitan_quest, 10)
+    cursor.execute("""
+        UPDATE characters 
+        SET gold = %s, exp = %s, score = %s
+        WHERE id = %s
+    """, (character.gold, character.exp, character.score, character.character_id))
+    db.commit()
 
-    if hasattr(character, 'user_id'):
-        character.score += score_gained
-        update_player_score(character.user_id, character.score)
-        print(f"🏆 Skor +{score_gained} (Total: {character.score})")
+    update_player_score(character.character_id, reward["score"])
 
-        try:
-            cursor.execute(
-                "UPDATE characters SET score = %s WHERE user_id = %s",
-                (character.score, character.user_id)
-            )
-            db.commit()
-            print("💾 Skor karakter berhasil disimpan ke database.\n")
-        except Exception as e:
-            db.rollback()
-            print(f"⚠️ Gagal menyimpan skor ke database: {e}")
-    else:
-        print("⚠️ Character ID tidak ditemukan, skor tidak dapat diperbarui.")
+    print(f"\n🎁 Kamu mendapatkan hadiah:")
+    print(f"  🪙 Gold : +{reward['gold']}")
+    print(f"  ✨ EXP  : +{reward['exp']}")
+    print(f"  🏅 Score: +{reward['score']}")
+    if is_boss:
+        print("  👑 Gelar (Title): Akan diberikan setelah Boss dikalahkan!")
+
+
+# ==================================================
+# LEVEL UP FLOOR & TITLE
+# ==================================================
+def level_up_floor(character, reward, title):
+    character.floor += 1
+    character.title = title
+    cursor.execute("""
+        UPDATE characters 
+        SET floor = %s, title = %s
+        WHERE id = %s
+    """, (character.floor, title, character.character_id))
+    db.commit()
+
+    print(f"\n🏆 Selamat! Kamu naik ke Floor {character.floor}!")
+    print(f"👑 Gelar baru: '{title}'")
+
+
+# ==================================================
+# MEMULAI QUEST
+# ==================================================
+def start_quest(character):
+    while True:
+        print("\n=== QUEST DIMULAI ===")
+        print("Pilih jenis pertempuran:")
+        print("[1] Monster biasa")
+        print("[2] Boss battle")
+        print("[0] Kembali")
+
+        battle_choice = input("Pilih jenis quest: ").strip()
+
+        if battle_choice == "1":
+            print("\n=== PILIH MONSTER ===")
+            for key, mon in MONSTERS.items():
+                r = mon["reward"]
+                print(f"[{key}] {mon['name']} (HP: {mon['hp']}, ATK: {mon['attack']}) "
+                      f"=> Reward: +{r['exp']} EXP, +{r['gold']} Gold, +{r['score']} Score")
+
+            choice = input("Pilih monster: ").strip()
+            enemy = MONSTERS.get(choice)
+            if not enemy:
+                print("Pilihan tidak valid.")
+                continue
+
+            print(f"\n⚔️ Kamu melawan {enemy['name']}!")
+            quest_action_menu(character, enemy, is_boss=False)
+
+        elif battle_choice == "2":
+            print("\n=== PILIH BOSS ===")
+            for key, boss in BOSSES.items():
+                r = boss["reward"]
+                print(f"[{key}] {boss['name']} (HP: {boss['hp']}, ATK: {boss['attack']}) "
+                      f"=> Reward: +{r['exp']} EXP, +{r['gold']} Gold, +{r['score']} Score, Title: '{boss['title']}'")
+
+            choice = input("Pilih boss: ").strip()
+            boss = BOSSES.get(choice)
+            if not boss:
+                print("Pilihan tidak valid.")
+                continue
+
+            print(f"\n🔥 Kamu menantang Boss {boss['name']}! Bersiaplah!")
+            quest_action_menu(character, boss, is_boss=True)
+
+        elif battle_choice == "0":
+            break
+        else:
+            print("⚠ Input tidak valid.")

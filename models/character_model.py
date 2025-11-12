@@ -29,4 +29,3 @@ class Character:
         print(f"Title   : {self.title}")
         print(f"Score   : {self.score}")
         print(f"Inventory: {self.inventory}")
-

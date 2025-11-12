@@ -37,7 +37,7 @@ def close_connection():
 #     )
 # ''')
 
-# # # 2. Tabel karakter dalam game
+# 2. Tabel karakter dalam game
 # cursor.execute('''
 #     CREATE TABLE characters (
 #     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -55,11 +55,7 @@ def close_connection():
 # );
 # ''')
 
-<<<<<<< HEAD
-# # 3. Tabel Inventory
-=======
-# 4. Tabel Shop Items (global)
->>>>>>> b95b6065a90f33c6870a93f7d7f5f052c2297180
+# 3. Tabel Shop Items (global)
 # cursor.execute('''
 # CREATE TABLE IF NOT EXISTS shop_items (
 #     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -71,7 +67,7 @@ def close_connection():
 # );
 # ''')
 
-# # # 3. Tabel Inventory
+# 4. Tabel Inventory
 # cursor.execute('''
 #     CREATE TABLE inventory (
 #     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -81,7 +77,6 @@ def close_connection():
 #     FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
 #     FOREIGN KEY (item_id) REFERENCES shop_items(id) ON DELETE CASCADE
 #     );
-
 # ''')
 
 

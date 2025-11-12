@@ -9,46 +9,40 @@ def display_leaderboard(leaderboard_data):
     Returns:
         None
     """
-    print("\n" + "="*70)
-    print("🏆 LEADERBOARD - TOP PLAYERS 🏆".center(70))
-    print("="*70)
+    print("\n" + "="*90)
+    print("🏆 LEADERBOARD - TOP PLAYERS 🏆".center(90))
+    print("="*90)
     
     if not leaderboard_data or not isinstance(leaderboard_data, list):
         print("Belum ada data pemain di leaderboard.")
-        print("="*70)
+        print("="*90)
         input("\nTekan Enter untuk kembali...")
         return
     
     # Header tabel
-    print(f"{'Rank':<6} {'Username':<15} {'Class':<12} {'Floor':<7} {'Score':<10} {'Title':<15}")
-    print("-"*70)
+    print(f"Rank   {'Username':<18} {'Class':<13} {'Floor':<8} {'Score':<10} {'Title':<15}")
+    print("-"*90)
     
     # Data pemain
     for idx, player in enumerate(leaderboard_data, start=1):
-        # Validasi setiap player
         if not isinstance(player, dict):
             continue
         
-        # Ambil data dengan fallback value
-        username = player.get('username', 'Unknown')[:15]  # Max 15 char
-        class_name = player.get('class_name', 'N/A')[:12]  # Max 12 char
+        username = str(player.get('username', 'Unknown'))[:17]
+        class_name = str(player.get('class_name', 'N/A'))[:12]
         floor = player.get('floor', 0)
         score = player.get('score', 0)
-        title = player.get('title', 'N/A')[:15]  # Max 15 char
+        title = str(player.get('title', 'N/A'))[:14]
         
-        # Medal untuk top 3
+        # Medal untuk top 3, spasi manual untuk yang lain
         if idx == 1:
-            medal = "🥇"
+            print(f"🥇     {username:<18} {class_name:<13} {floor:<8} {score:<10} {title:<15}")
         elif idx == 2:
-            medal = "🥈"
+            print(f"🥈     {username:<18} {class_name:<13} {floor:<8} {score:<10} {title:<15}")
         elif idx == 3:
-            medal = "🥉"
+            print(f"🥉     {username:<18} {class_name:<13} {floor:<8} {score:<10} {title:<15}")
         else:
-            medal = f"{idx}."
-        
-        # Print data
-        print(f"{medal:<6} {username:<15} {class_name:<12} "
-              f"{floor:<7} {score:<10} {title:<15}")
+            print(f"{idx}.     {username:<18} {class_name:<13} {floor:<8} {score:<10} {title:<15}")
     
-    print("="*70)
+    print("="*90)
     input("\nTekan Enter untuk kembali...")
